@@ -1,0 +1,35 @@
+<iq from='crone1@shakespeare.lit/desktop'
+    id='member4'
+    to='coven@chat.shakespeare.lit'
+    type='set'>
+  <query xmlns='http://jabber.org/protocol/muc#admin'>
+    <item affiliation='none'
+          jid='hag66@shakespeare.lit'/>
+    <item affiliation='member'
+          jid='hecate@shakespeare.lit'/>
+  </query>
+</iq>
+
+<iq from='crone1@shakespeare.lit/desktop'
+    id='member1'
+    to='coven@chat.shakespeare.lit'
+    type='set'>
+  <query xmlns='http://jabber.org/protocol/muc#admin'>
+    <item affiliation='member'
+          jid='hag66@shakespeare.lit'
+          nick='thirdwitch'>
+      <reason>A worthy witch indeed!</reason>
+    </item>
+  </query>
+</iq>
+
+<iq from='crone1@shakespeare.lit/desktop'
+    id='member1'
+    to='coven@chat.shakespeare.lit'
+    type='set'>
+  <query xmlns='http://jabber.org/protocol/muc#admin'>
+    <item affiliation='member'
+          jid='hag66@shakespeare.lit'
+          nick='thirdwitch'/>
+  </query>
+</iq>

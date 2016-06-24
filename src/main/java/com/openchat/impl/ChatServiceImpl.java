@@ -28,10 +28,10 @@ public class ChatServiceImpl extends BaseServiceImpl implements ChatService, Lis
 
     @Override
     public void sendMessage(String to, String message) {
-        String jid = this.xmppClient.createOpenChatJid(to);
+        //String jid = this.xmppClient.createOpenChatJid(to);
         try {
-            log.info("Sending: " + message + " to " + jid);
-            Chat chat = this.xmppClient.getJaxmpp().createChat(JID.jidInstance(jid));
+            log.info("Sending: " + message + " to " + to);
+            Chat chat = this.xmppClient.getJaxmpp().createChat(JID.jidInstance(to));
             chat.sendMessage(message);
         } catch (JaxmppException e) {
             log.error(e);

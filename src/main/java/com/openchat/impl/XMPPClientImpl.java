@@ -1,6 +1,8 @@
 package com.openchat.impl;
 
 import com.openchat.XMPPClient;
+import com.openchat.utils.XMPPUtil;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,6 +12,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import tigase.jaxmpp.core.client.XmppModulesManager;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
+import tigase.jaxmpp.j2se.ConnectionConfiguration.ConnectionType;
 import tigase.jaxmpp.j2se.Jaxmpp;
 
 /**
@@ -34,6 +37,7 @@ public class XMPPClientImpl implements InitializingBean, XMPPClient {
     @Value("${xmpp.server}")
     public void setServer(String server) {
         this.server = server;
+        XMPPUtil.SERVER = server;
     }
 
     @Value("${xmpp.port}")
@@ -83,6 +87,9 @@ public class XMPPClientImpl implements InitializingBean, XMPPClient {
     }
 
     public void login() throws Exception {
+    	this.jaxmpp.getSessionObject().setProperty(tigase.jaxmpp.j2se.connectors.socket.SocketConnector.HOSTNAME_VERIFIER_DISABLED_KEY, Boolean.TRUE);
+    	this.jaxmpp.getConnectionConfiguration().setConnectionType(ConnectionType.socket);
+    	this.jaxmpp.getConnectionConfiguration().setUseSASL(false);
         this.jaxmpp.getConnectionConfiguration().setServer(this.server);
         this.jaxmpp.getConnectionConfiguration().setPort(this.port);
         String jid = this.createOpenChatJid(this.username);
@@ -100,8 +107,10 @@ public class XMPPClientImpl implements InitializingBean, XMPPClient {
     }
 
     public String createOpenChatJid(String username) {
-        String jid = StringUtils.replace(username, "@", "$");
+        //String jid = StringUtils.replace(username, "@", "$");
+    	String jid = username;
         jid = StringUtils.appendIfMissing(jid, "@" + domain);
+        log.info("createOpenChatJid:" + jid);
         return jid;
     }
 

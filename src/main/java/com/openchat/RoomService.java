@@ -1,5 +1,8 @@
 package com.openchat;
 
+
+import java.util.List;
+
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room;
 
 /**
@@ -28,5 +31,39 @@ public interface RoomService {
      * @param roomName
      */
     public void leave(String roomName);
+    
+    /**
+     * 邀请用户到room
+     * @param room
+     * @param inviteeJID
+     * @param reason
+     */
+    void invite(Room room, String inviteeJID, String reason);
 
+    /**
+     * 删除room
+     * @param room
+     */
+    void destroy(Room room);
+    
+    /**
+     * 禁言用户
+     * @param room
+     * @param name
+     */
+    void change2Visitor(Room room, String name);
+    
+    /**
+     * 设置房间为members-only
+     * @param room
+     */
+    void configMembersOnlyRoom(Room room);
+    
+    /**
+     * 为members-only的房间添加成员
+     * @param membersOnlyRoom
+     */
+    void addMembers(Room membersOnlyRoom, List<String> members);
+    
+    void getRooms();
 }

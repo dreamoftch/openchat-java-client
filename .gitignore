@@ -43,3 +43,4 @@ Thumbs.db
 # subversion files  #
 ######################
 .svn/*
+/target/
