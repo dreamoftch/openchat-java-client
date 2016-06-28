@@ -84,5 +84,12 @@ public interface RoomService {
      * @param username
      * @param memebers
      */
-    public void richMJMemberOnlyRoon(String roomName, String username, List<String> members);
+    void richMJMemberOnlyRoon(String roomName, String username, List<String> members);
+    
+    /**
+     * 直接邀请用户加入房间
+     * @param roomName
+     * @param targetUser
+     */
+    void richmjDirectInviteUser(String roomName, List<String> targetUsers);
 }

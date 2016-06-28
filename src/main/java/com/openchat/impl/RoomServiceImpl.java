@@ -26,6 +26,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.MucEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Role;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -304,9 +305,11 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 			//首先代表用户去创建房间
 			send(XMPPUtil.joinRoomStanza(roomName, username));
 			//等待一会，确保该房间已经创建成功
-			Thread.sleep(200);
+			Thread.sleep(300);
 			//设置房间为member-only
 			send(memberOnlyStanza(roomName, username));
+			//给创建房间的人发送邀请
+			richmjDirectInviteUser(roomName, Arrays.asList(username));
 			//添加member
 			addMembers(roomName, members);
 		} catch (Exception e) {
@@ -337,6 +340,27 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 		log.info("membersOnly:" + iq.getAsString());
 		return iq;
 	}
+	
+	@Override
+	public void richmjDirectInviteUser(String roomName, List<String> targetUsers){
+    	try {
+    		if(CollectionUtils.isEmpty(targetUsers)){
+    			return;
+    		}
+    		for(String targetUser : targetUsers){
+    			Message message = Message.create();
+    			message.setAttribute("from", XMPPUtil.getSystemUsernameBareJID());
+    			message.setAttribute("to", XMPPUtil.getBareJID(targetUser));
+    			Element x = new DefaultElement("x", null, "jabber:x:conference");
+    			x.setAttribute("jid", XMPPUtil.getRoomJID(roomName));
+    			message.addChild(x);
+    			send(message);
+    		}
+		} catch (Exception e) {
+			log.error("richmjDirectInviteUser异常：", e);
+			e.printStackTrace();
+		}
+    }
 	
 	/**
 	 * 向服务端发送stanza

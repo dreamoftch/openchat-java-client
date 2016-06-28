@@ -11,8 +11,14 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 
 public final class XMPPUtil {
-	
+	/**
+	 * 聊天服务器地址
+	 */
 	public static String SERVER = null;
+	/**
+	 * 系统账号
+	 */
+	public static String SYSTEM_USERNAME = null;
 
 	private XMPPUtil(){}
 	
@@ -71,6 +77,28 @@ public final class XMPPUtil {
 			return roomName;
 		}
 		return roomName + suffix;
+	}
+	
+	/**
+	 * 获取系统账号bare jid
+	 * @return
+	 */
+	public static String getSystemUsernameBareJID(){
+		if(SYSTEM_USERNAME == null){
+			throw new RuntimeException("SYSTEM_USERNAME为空");
+		}
+		return getBareJID(SYSTEM_USERNAME);
+	}
+	
+	/**
+	 * 获取系统账号bare name
+	 * @return
+	 */
+	public static String getSystemUsernameBareName(){
+		if(SYSTEM_USERNAME == null){
+			throw new RuntimeException("SYSTEM_USERNAME为空");
+		}
+		return getBareName(SYSTEM_USERNAME);
 	}
 	
 	/**

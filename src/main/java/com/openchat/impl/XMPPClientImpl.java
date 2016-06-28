@@ -53,6 +53,7 @@ public class XMPPClientImpl implements InitializingBean, XMPPClient {
     @Value("${xmpp.username}")
     public void setUsername(String username) {
         this.username = username;
+        XMPPUtil.SYSTEM_USERNAME = username;
     }
 
     @Value("${xmpp.password}")

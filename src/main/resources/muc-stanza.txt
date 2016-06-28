@@ -66,3 +66,28 @@
     </item>
   </query>
 </iq>
+
+邀请用户加入群组（分为直接邀请和间接邀请）：
+直接邀请（http://xmpp.org/extensions/xep-0249.html）：
+<message
+    from='crone1@shakespeare.lit/desktop'
+    to='hecate@shakespeare.lit'>
+  <x xmlns='jabber:x:conference'
+     jid='darkcave@macbeth.shakespeare.lit'
+     password='cauldronburn'
+     reason='Hey Hecate, this is the place for all good witches!'/>
+</message>
+
+间接邀请（http://xmpp.org/extensions/xep-0045.html）：
+<message
+    from='crone1@shakespeare.lit/desktop'
+    id='nzd143v8'
+    to='coven@chat.shakespeare.lit'>
+  <x xmlns='http://jabber.org/protocol/muc#user'>
+    <invite to='hecate@shakespeare.lit'>
+      <reason>
+        Hey Hecate, this is the place for all good witches!
+      </reason>
+    </invite>
+  </x>
+</message>

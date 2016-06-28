@@ -11,19 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
-import com.openchat.constants.Constant;
-import com.openchat.utils.XMPPUtil;
-
-import tigase.jaxmpp.core.client.AsyncCallback;
-import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
-import tigase.jaxmpp.core.client.exceptions.JaxmppException;
-import tigase.jaxmpp.core.client.xml.DefaultElement;
-import tigase.jaxmpp.core.client.xml.Element;
-import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
-import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
-import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
-
 /**
  * main of this project.
  * @author wche
@@ -56,9 +43,10 @@ public class OpenChatClient {
 //        }
 
         RoomService roomService = context.getBean(RoomService.class);
-        //roomService.richMJMemberOnlyRoon("richMJMemberOnlyRoon-1", "chaohui", Arrays.asList("richmj"));
-        roomService.change2Visitor("richMJMemberOnlyRoon-1", "chaohui", "richmj");
+        roomService.richMJMemberOnlyRoon("richMJMemberOnlyRoon-2", "chaohui", Arrays.asList("richmj"));
+        //roomService.change2Visitor("richMJMemberOnlyRoon-1", "chaohui", "richmj");
         //roomService.invite(roomService.getRoom("richMJMemberOnlyRoon-1"), "chaohui", "reason...");
+        //roomService.richmjDirectInviteUser("richMJMemberOnlyRoon-1", Arrays.asList("chaohui", "admin", "richmj"));
         
 //        membersOnly(context, "members-only-67");
 //        richmjMembersOnly(context, xmppClient, "richmj-chaohui-members-only-11", "chaohui");
@@ -104,77 +92,6 @@ public class OpenChatClient {
         context.close();
     }
     
-    public static void membersOnly(AnnotationConfigApplicationContext context, String roomName) throws InterruptedException{
-    	RoomService roomService = context.getBean(RoomService.class);
-    	//1.创建并进入room
-        roomService.join(roomName, "richmj");
-        roomService.getRooms();
-    }
     
-    public static void richmjMembersOnly(AnnotationConfigApplicationContext context, XMPPClient xmppClient, String roomName, String username) throws InterruptedException{
-    	RoomService roomService = context.getBean(RoomService.class);
-        try {
-			xmppClient.getJaxmpp().send(XMPPUtil.joinRoomStanza(roomName, username));
-			
-			Thread.sleep(200);
-			
-			IQ iq = iq(XMPPUtil.getRoomJID(roomName), StanzaType.set);
-			iq.setAttribute("to", "richmj-component@192.168.43.146");
-			iq.setAttribute(Constant.RICHMJ_STANZA_FROM, XMPPUtil.getBareJID(username));
-			iq.setAttribute(Constant.RICHMJ_STANZA_TO, XMPPUtil.getRoomJID(roomName));
-			Element query = new DefaultElement("query", null, "http://jabber.org/protocol/muc#owner");
-			Element x = new DefaultElement("x", null, "jabber:x:data");
-			x.setAttribute("type", "submit");
-			x.addChild(field("FORM_TYPE", "http://jabber.org/protocol/muc#roomconfig"));
-			x.addChild(field("muc#roomconfig_membersonly", "1"));
-			query.addChild(x);
-			iq.addChild(query);
-			log.info("membersOnly:" + iq.getAsString());
-			System.err.println("membersOnly:" + iq.getAsString());
-			xmppClient.getJaxmpp().send(iq, new AsyncCallback() {
-				@Override
-				public void onTimeout() throws JaxmppException {
-					log.info("onTimeout");
-				}
-				@Override
-				public void onSuccess(Stanza responseStanza) throws JaxmppException {
-					log.info("onSuccess:" + responseStanza.getAsString());
-				}
-				@Override
-				public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
-					log.error("onError:" + responseStanza.getAsString());
-				}
-			});
-			
-			Thread.sleep(200);
-			
-			roomService.addMembers(roomName, Arrays.asList("chaohui"));
-			roomService.addMembers(roomName, Arrays.asList("richmj"));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-    }
-    
-    private static IQ iq(String to, StanzaType type) throws XMLException{
-    	IQ iq = IQ.create();
-		iq.setAttribute("to", to);
-		iq.setType(type);
-		return iq;
-    }
-    
-    private static Element field(String fieldName, String value) throws XMLException{
-    	Element field = new DefaultElement("field", null, null);
-		setAttribute(field, "var", fieldName);
-		field.addChild(element("value", value, null));
-		return field;
-    }
-    
-    private static Element element(String name, String value, String xmlns){
-    	return new DefaultElement(name, value, xmlns);
-    }
-    
-    private static void setAttribute(Element element, String attrName, String attrValue) throws XMLException{
-    	element.setAttribute(attrName, attrValue);
-    }
     
 }
