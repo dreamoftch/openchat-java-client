@@ -20,7 +20,6 @@ import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
-import tigase.jaxmpp.core.client.xmpp.modules.roster.RosterItem;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
@@ -52,12 +51,14 @@ public class OpenChatClient {
         Thread.sleep(1000);  // give XMPP enough time to initialize
 //        xmppClient.getJaxmpp().sendMessage(JID.jidInstance("admin@192.168.43.146"), "Test", "This is a test");
         // get all my buddies
-        for (RosterItem item : xmppClient.getJaxmpp().getRoster().getAll()) {
-            log.info(item.getName() + " subscription " + item.getSubscription().name());
-        }
+//        for (RosterItem item : xmppClient.getJaxmpp().getRoster().getAll()) {
+//            log.info(item.getName() + " subscription " + item.getSubscription().name());
+//        }
 
         RoomService roomService = context.getBean(RoomService.class);
-        roomService.richMJMemberOnlyRoon("richMJMemberOnlyRoon-1", "chaohui", Arrays.asList("richmj"));
+        //roomService.richMJMemberOnlyRoon("richMJMemberOnlyRoon-1", "chaohui", Arrays.asList("richmj"));
+        roomService.change2Visitor("richMJMemberOnlyRoon-1", "chaohui", "richmj");
+        //roomService.invite(roomService.getRoom("richMJMemberOnlyRoon-1"), "chaohui", "reason...");
         
 //        membersOnly(context, "members-only-67");
 //        richmjMembersOnly(context, xmppClient, "richmj-chaohui-members-only-11", "chaohui");

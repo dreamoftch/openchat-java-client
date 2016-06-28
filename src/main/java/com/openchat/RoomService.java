@@ -51,7 +51,7 @@ public interface RoomService {
      * @param room
      * @param name
      */
-    void change2Visitor(Room room, String name);
+    void change2Visitor(String roomName, String admin, String visitor);
     
     /**
      * 设置房间为members-only

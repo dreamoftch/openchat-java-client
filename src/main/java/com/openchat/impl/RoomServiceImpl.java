@@ -155,7 +155,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
     @Override
     public void invite(Room room, String inviteeJID, String reason){
     	try {
-			this.mucModule.invite(room, JID.jidInstance(inviteeJID), reason);
+			this.mucModule.invite(room, JID.jidInstance(XMPPUtil.getBareJID(inviteeJID)), reason);
 		} catch (JaxmppException e) {
 			e.printStackTrace();
 		}
@@ -174,23 +174,20 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 	 * 禁言用户
 	 */
     @Override
-	public void change2Visitor(Room room, String name){
-//		<iq xmlns="jabber:client" type="set" to="open-chat-room-1@muc.192.168.43.146" id="aaeaa">
-//		    <query xmlns="http://jabber.org/protocol/muc#admin">
-//		        <item nick="chaohui" role="visitor"/>
-//		    </query>
-//		</iq>
+	public void change2Visitor(String roomName, String admin, String visitor){
 		try {
 			IQ iq = IQ.create();
-			iq.setAttribute("to", room.getRoomJid().toString());
+			iq.setAttribute("to", Constant.RICHMJ_COMPONNET_JID);
+			iq.setAttribute(Constant.RICHMJ_STANZA_FROM, XMPPUtil.getBareJID(admin));
+			iq.setAttribute(Constant.RICHMJ_STANZA_TO, XMPPUtil.getRoomJID(roomName));
 			iq.setType(StanzaType.set);
 			Element query = new DefaultElement("query", null, "http://jabber.org/protocol/muc#admin");
 			Element item = new DefaultElement("item", null, null);
-			item.setAttribute("nick", name);
+			item.setAttribute("nick", XMPPUtil.getBareName(visitor));
 			item.setAttribute("role", Role.visitor.name());
 			query.addChild(item);
 			iq.addChild(query);
-			this.xmppClient.getJaxmpp().send(iq);
+			send(iq);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -218,7 +215,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 			iq.addChild(query);
 			log.info("membersOnly:" + iq.getAsString());
 			System.err.println("membersOnly:" + iq.getAsString());
-			this.xmppClient.getJaxmpp().send(iq);
+			send(iq);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -245,7 +242,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 				query.addChild(item);
 			}
 			log.info("addMembers:" + iq.getAsString());
-			this.xmppClient.getJaxmpp().send(iq);
+			send(iq);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
