@@ -1,0 +1,58 @@
+
+群聊相关的一些stanza（xml片段）
+
+参考：http://xmpp.org/extensions/xep-0045.html
+
+创建room的stanza：
+<presence
+    from='crone1@shakespeare.lit/desktop'
+    to='coven@chat.shakespeare.lit/firstwitch'>
+  <x xmlns='http://jabber.org/protocol/muc'/>
+</presence>
+
+房间创建成功之后，client收到的stanza：
+<presence
+    from='coven@chat.shakespeare.lit/firstwitch'
+    to='crone1@shakespeare.lit/desktop'>
+  <x xmlns='http://jabber.org/protocol/muc#user'>
+    <item affiliation='owner'
+          role='moderator'/>
+    <status code='110'/>
+    <status code='201'/>
+  </x>
+</presence>
+
+创建成功之后对房间进行配置的stanza（根据自己需求提交响应的参数，下面的例子是配置room名称和members only）：
+一个set类型的iq，query里面的x元素的type为submit,然后里面的field为相关的配置项
+<iq from='crone1@shakespeare.lit/desktop'
+    id='create2'
+    to='coven@chat.shakespeare.lit'
+    type='set'>
+  <query xmlns='http://jabber.org/protocol/muc#owner'>
+    <x xmlns='jabber:x:data' type='submit'>
+      <field var='FORM_TYPE'>
+        <value>http://jabber.org/protocol/muc#roomconfig</value>
+      </field>
+      <field var='muc#roomconfig_roomname'>
+        <value>A Dark Cave</value>
+      </field>
+      <field var='muc#roomconfig_membersonly'>
+        <value>1</value>
+      </field>
+    </x>
+  </query>
+</iq>
+
+如果配置了room是members only，然后想要往该房间添加允许进入的member，使用下面的stanza：
+一个set类型的iq，query里面的item元素表示要添加的member，可以添加多个item，即多个member，指定query的affiliation属性为member即可
+<iq from='crone1@shakespeare.lit/desktop'
+    id='member4'
+    to='coven@chat.shakespeare.lit'
+    type='set'>
+  <query xmlns='http://jabber.org/protocol/muc#admin'>
+    <item affiliation='none'
+          jid='hag66@shakespeare.lit'/>
+    <item affiliation='member'
+          jid='hecate@shakespeare.lit'/>
+  </query>
+</iq>

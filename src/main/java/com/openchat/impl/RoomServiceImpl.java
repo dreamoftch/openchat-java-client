@@ -7,19 +7,26 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import com.openchat.RoomService;
+import com.openchat.constants.Constant;
 import com.openchat.utils.XMPPUtil;
 
+import tigase.jaxmpp.core.client.AsyncCallback;
 import tigase.jaxmpp.core.client.JID;
+import tigase.jaxmpp.core.client.XMPPException.ErrorCondition;
 import tigase.jaxmpp.core.client.exceptions.JaxmppException;
 import tigase.jaxmpp.core.client.observer.Listener;
 import tigase.jaxmpp.core.client.xml.DefaultElement;
 import tigase.jaxmpp.core.client.xml.Element;
 import tigase.jaxmpp.core.client.xml.XMLException;
 import tigase.jaxmpp.core.client.xmpp.modules.chat.ChatState;
+import tigase.jaxmpp.core.client.xmpp.modules.chat.MessageModule.AbstractMessageEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.InvitationEvent;
+import tigase.jaxmpp.core.client.xmpp.modules.muc.MucModule.MucEvent;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Role;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
 /**
@@ -29,7 +36,7 @@ import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
  * @since 9/23/14
  */
 @Component
-public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Listener<MucModule.MucEvent> {
+public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Listener<AbstractMessageEvent> {
 
     private MucModule mucModule;
 
@@ -40,52 +47,70 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
     }
 
     @Override
-    public void handleEvent(MucModule.MucEvent event) throws JaxmppException {
-        if (MucModule.NewRoomCreated.equals(event.getType())) {
-            log.info("NewRoomCreated, room jid:" + event.getRoom().getRoomJid() + ", room nickName:" + event.getRoom().getNickname());
+    public void handleEvent(AbstractMessageEvent event) throws JaxmppException {
+    	if(event instanceof MucModule.MucEvent){
+    		MucEvent mucEvent = (MucEvent)event;
+    		handleMucEvent(mucEvent);
+    	}else if(event instanceof InvitationEvent){
+    		InvitationEvent invitationEvent = (InvitationEvent)event;
+    		handleInvitationEvent(invitationEvent);
+    	}else{
+    		System.err.println("AbstractMessageEvent:" + event.getType() + ", message: " + event.getMessage());
+    	}
+        
+    }
+    
+    private void handleInvitationEvent(InvitationEvent invitationEvent) {
+    	log.info(String.format("invitationEvent, roomId: %s, InviterJID: %s, InvitationType: %s", 
+    			invitationEvent.getRoomJID().toString(), invitationEvent.getInviterJID().toString(), invitationEvent.getInvitationType()));
+	}
+
+	private void handleMucEvent(MucModule.MucEvent mucEvent) throws XMLException{
+    	if (MucModule.NewRoomCreated.equals(mucEvent.getType())) {
+            log.info("NewRoomCreated, room jid:" + mucEvent.getRoom().getRoomJid() + ", room nickName:" + mucEvent.getRoom().getNickname());
             
-            Room room = event.getRoom();
+            Room room = mucEvent.getRoom();
             //把room设置为members-only
             configMembersOnlyRoom(room);
             //向该room添加member
             addMembers(room, Arrays.asList("chaohui"));
         }
-        else if (MucModule.InvitationReceived.equals(event.getType())) {
-            log.info("InvitationReceived " + event.getRoom().getNickname());
+        else if (MucModule.InvitationReceived.equals(mucEvent.getType())) {
+            log.info("InvitationReceived " + mucEvent.getRoom().getNickname());
         }
-        else if (MucModule.OccupantComes.equals(event.getType())) {
-            log.info("OccupantComes " + event.getRoom().getNickname() + " Occupant " + event.getOccupant().getNickname());
+        else if (MucModule.OccupantComes.equals(mucEvent.getType())) {
+            log.info("OccupantComes " + mucEvent.getRoom().getNickname() + " Occupant " + mucEvent.getOccupant().getNickname());
         }
-        else if (MucModule.OccupantLeaved.equals(event.getType())) {
-            log.info("OccupantLeaved " + event.getRoom().getNickname() + " Occupant " + event.getOccupant().getNickname());
+        else if (MucModule.OccupantLeaved.equals(mucEvent.getType())) {
+            log.info("OccupantLeaved " + mucEvent.getRoom().getNickname() + " Occupant " + mucEvent.getOccupant().getNickname());
         }
-        else if (MucModule.MucMessageReceived.equals(event.getType())) {
-            List<Element> states = event.getMessage().getChildrenNS(ChatState.XMLNS);
-            String body = event.getMessage().getBody();
+        else if (MucModule.MucMessageReceived.equals(mucEvent.getType())) {
+            List<Element> states = mucEvent.getMessage().getChildrenNS(ChatState.XMLNS);
+            String body = mucEvent.getMessage().getBody();
             if (states.size() > 0) {
                 ChatState chatState = ChatState.fromElement(states.get(0));
-                log.info("ChatState in room" + event.getRoom().getNickname() + " from " + event.getNickname() + " state " + chatState);
+                log.info("ChatState in room" + mucEvent.getRoom().getNickname() + " from " + mucEvent.getNickname() + " state " + chatState);
             }
             else if (body != null) {
-                log.info("Chat in room " + event.getRoom().getRoomJid() + " from " + event.getNickname() + " body " + body);
+                log.info("Chat in room " + mucEvent.getRoom().getRoomJid() + " from " + mucEvent.getNickname() + " body " + body);
             }
         }
-        else if (MucModule.OccupantChangedPresence.equals(event.getType())) {
+        else if (MucModule.OccupantChangedPresence.equals(mucEvent.getType())) {
             // chat state update
-            log.info("OccupantChangedPresence " + event.getRoom().getRoomJid() + " Occupant " + event.getOccupant().getNickname() +
-                    " state " + event.getOccupant().getChatState());
+            log.info("OccupantChangedPresence " + mucEvent.getRoom().getRoomJid() + " Occupant " + mucEvent.getOccupant().getNickname() +
+                    " state " + mucEvent.getOccupant().getChatState());
         }
-        else if (MucModule.StateChange.equals(event.getType())) {
-            log.info("StateChange " + event.getRoom().getRoomJid() + " State " + event.getRoom().getState().name() + ", occupant:" + event.getNickname());
+        else if (MucModule.StateChange.equals(mucEvent.getType())) {
+            log.info("StateChange " + mucEvent.getRoom().getRoomJid() + " State " + mucEvent.getRoom().getState().name() + ", occupant:" + mucEvent.getNickname());
         }
-        else if (MucModule.JoinRequested.equals(event.getType())) {
-            log.info("JoinRequested " + event.getRoom().getRoomJid());
+        else if (MucModule.JoinRequested.equals(mucEvent.getType())) {
+            log.info("JoinRequested " + mucEvent.getRoom().getRoomJid());
         }
-        else if (MucModule.RoomClosed.equals(event.getType())) {
-            log.info("RoomClosed " + event.getRoom().getRoomJid());
+        else if (MucModule.RoomClosed.equals(mucEvent.getType())) {
+            log.info("RoomClosed " + mucEvent.getRoom().getRoomJid());
         }
         else {
-            log.warn("Ignoring MucEvent " + event.getType());
+            log.warn("Ignoring MucEvent " + mucEvent.getType());
         }
     }
 
@@ -192,6 +217,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 			query.addChild(x);
 			iq.addChild(query);
 			log.info("membersOnly:" + iq.getAsString());
+			System.err.println("membersOnly:" + iq.getAsString());
 			this.xmppClient.getJaxmpp().send(iq);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -200,21 +226,16 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
     
     @Override
     public void addMembers(Room membersOnlyRoom, List<String> members){
-//    	<iq from='crone1@shakespeare.lit/desktop'
-//    		    id='member1'
-//    		    to='coven@chat.shakespeare.lit'
-//    		    type='set'>
-//    		  <query xmlns='http://jabber.org/protocol/muc#admin'>
-//    		    <item affiliation='member'
-//    		          jid='hag66@shakespeare.lit'
-//    		          nick='thirdwitch'/>
-//    		  </query>
-//    		</iq>
-    	if(CollectionUtils.isEmpty(members)){
-    		return;
-    	}
-    	try {
-			IQ iq = iq(membersOnlyRoom.getRoomJid().toString(), StanzaType.set);
+    	addMembers(membersOnlyRoom.getRoomJid().toString(), members);
+    }
+    
+    @Override
+    public void addMembers(String roomName, List<String> members){
+		if(CollectionUtils.isEmpty(members)){
+			return;
+		}
+		try {
+			IQ iq = iq(XMPPUtil.getRoomJID(roomName), StanzaType.set);
 			Element query = new DefaultElement("query", null, "http://jabber.org/protocol/muc#admin");
 			iq.addChild(query);
 			for(String member : members){
@@ -256,5 +277,97 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
     private void setAttribute(Element element, String attrName, String attrValue) throws XMLException{
     	element.setAttribute(attrName, attrValue);
     }
+
+	@Override
+	public void joinMembersOnlyRoom(String roomName, String creator) {
+		try {
+			xmppClient.getJaxmpp().send(XMPPUtil.joinRoomStanza(roomName, creator), new AsyncCallback() {
+				@Override
+				public void onTimeout() throws JaxmppException {
+					log.info("onTimeout");
+				}
+				@Override
+				public void onSuccess(Stanza responseStanza) throws JaxmppException {
+					log.info("onSuccess:" + responseStanza.getAsString());
+				}
+				@Override
+				public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
+					log.error("onError:" + responseStanza.getAsString());
+				}
+			});
+		} catch (Exception e) {
+			log.error("joinMembersOnlyRoom异常：", e);
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public void richMJMemberOnlyRoon(String roomName, String username, List<String> members){
+		try {
+			//首先代表用户去创建房间
+			send(XMPPUtil.joinRoomStanza(roomName, username));
+			//等待一会，确保该房间已经创建成功
+			Thread.sleep(200);
+			//设置房间为member-only
+			send(memberOnlyStanza(roomName, username));
+			//添加member
+			addMembers(roomName, members);
+		} catch (Exception e) {
+			log.error("richMJMemberOnlyRoon异常：", e);
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 配置member-only room的stanza
+	 * @param roomName
+	 * @param username
+	 * @return
+	 * @throws XMLException
+	 */
+	private IQ memberOnlyStanza(String roomName, String username) throws XMLException{
+		IQ iq = iq(XMPPUtil.getRoomJID(roomName), StanzaType.set);
+		iq.setAttribute("to", Constant.RICHMJ_COMPONNET_JID);
+		iq.setAttribute(Constant.RICHMJ_STANZA_FROM, XMPPUtil.getBareJID(username));
+		iq.setAttribute(Constant.RICHMJ_STANZA_TO, XMPPUtil.getRoomJID(roomName));
+		Element query = new DefaultElement("query", null, "http://jabber.org/protocol/muc#owner");
+		Element x = new DefaultElement("x", null, "jabber:x:data");
+		x.setAttribute("type", "submit");
+		x.addChild(field("FORM_TYPE", "http://jabber.org/protocol/muc#roomconfig"));
+		x.addChild(field("muc#roomconfig_membersonly", "1"));
+		query.addChild(x);
+		iq.addChild(query);
+		log.info("membersOnly:" + iq.getAsString());
+		return iq;
+	}
+	
+	/**
+	 * 向服务端发送stanza
+	 * @param stanza
+	 * @throws XMLException
+	 * @throws JaxmppException
+	 */
+	private void send(Stanza stanza) throws XMLException, JaxmppException{
+		log.info("开始发送stanza:" + stanza.getAsString());
+		//如果是iq类型的stanza，则等待响应
+		if("iq".equalsIgnoreCase(stanza.getName())){
+			xmppClient.getJaxmpp().send(stanza, new AsyncCallback() {
+				@Override
+				public void onTimeout() throws JaxmppException {
+					log.info("onTimeout");
+				}
+				@Override
+				public void onSuccess(Stanza responseStanza) throws JaxmppException {
+					log.info("onSuccess:" + responseStanza.getAsString());
+				}
+				@Override
+				public void onError(Stanza responseStanza, ErrorCondition error) throws JaxmppException {
+					log.error("onError:" + responseStanza.getAsString());
+				}
+			});
+			return;
+		}
+		xmppClient.getJaxmpp().send(stanza);
+	}
 
 }

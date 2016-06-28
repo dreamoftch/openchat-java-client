@@ -65,5 +65,24 @@ public interface RoomService {
      */
     void addMembers(Room membersOnlyRoom, List<String> members);
     
+    /**
+     * 为members-only的房间添加成员
+     * @param membersOnlyRoom
+     */
+    void addMembers(String roomName, List<String> members);
+    
     void getRooms();
+    
+    /**
+     * 加入members-only room
+     */
+    void joinMembersOnlyRoom(String roomName, String creator);
+    
+    /**
+     * 代表用户username创建member-only的room并且邀请指定的用户加入
+     * @param roomName
+     * @param username
+     * @param memebers
+     */
+    public void richMJMemberOnlyRoon(String roomName, String username, List<String> members);
 }
