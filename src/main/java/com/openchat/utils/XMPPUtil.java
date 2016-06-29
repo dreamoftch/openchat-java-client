@@ -111,10 +111,7 @@ public final class XMPPUtil {
 		Presence presence = null;
 		try {
 			presence = Presence.create();
-			presence.setAttribute("to", Constant.RICHMJ_COMPONNET_JID);
-			presence.setAttribute(Constant.RICHMJ_STANZA_FROM, getBareJID(creator));
-			// 格式：roomJID/nickName
-			presence.setAttribute(Constant.RICHMJ_STANZA_TO, getRoomJID(roomName) + "/" + getBareName(creator));
+			richmjComponentAgent(presence, getBareJID(creator), getRoomJID(roomName) + "/" + getBareName(creator));
 			Element x = new DefaultElement("x", null, "http://jabber.org/protocol/muc");
 			presence.addChild(x);
 			System.out.println("presence:" + presence.getAsString());
@@ -122,6 +119,21 @@ public final class XMPPUtil {
 			e.printStackTrace();
 		}
 		return presence;
+	}
+	
+	/**
+	 * 配置element代理
+	 * @param element
+	 * @param from
+	 * @param to
+	 * @throws XMLException
+	 */
+	public static void richmjComponentAgent(Element element, String from, String to) throws XMLException{
+		//1.将该stanza发到自定义的richmj component，然后该component作为代理，代表from，将该stanza转发到期望的地址to
+		element.setAttribute("to", Constant.RICHMJ_COMPONNET_JID);
+		//2.配置期望的的from和to属性
+		element.setAttribute(Constant.RICHMJ_STANZA_FROM, from);
+		element.setAttribute(Constant.RICHMJ_STANZA_TO, to);
 	}
 	
 	public static void main(String[] args) {

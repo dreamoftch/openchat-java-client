@@ -7,7 +7,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import com.openchat.RoomService;
-import com.openchat.constants.Constant;
 import com.openchat.utils.XMPPUtil;
 
 import tigase.jaxmpp.core.client.AsyncCallback;
@@ -27,6 +26,7 @@ import tigase.jaxmpp.core.client.xmpp.modules.muc.Role;
 import tigase.jaxmpp.core.client.xmpp.modules.muc.Room;
 import tigase.jaxmpp.core.client.xmpp.stanzas.IQ;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Message;
+import tigase.jaxmpp.core.client.xmpp.stanzas.Presence;
 import tigase.jaxmpp.core.client.xmpp.stanzas.Stanza;
 import tigase.jaxmpp.core.client.xmpp.stanzas.StanzaType;
 
@@ -178,9 +178,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 	public void change2Visitor(String roomName, String admin, String visitor){
 		try {
 			IQ iq = IQ.create();
-			iq.setAttribute("to", Constant.RICHMJ_COMPONNET_JID);
-			iq.setAttribute(Constant.RICHMJ_STANZA_FROM, XMPPUtil.getBareJID(admin));
-			iq.setAttribute(Constant.RICHMJ_STANZA_TO, XMPPUtil.getRoomJID(roomName));
+			XMPPUtil.richmjComponentAgent(iq, XMPPUtil.getBareJID(admin), XMPPUtil.getRoomJID(roomName));
 			iq.setType(StanzaType.set);
 			Element query = new DefaultElement("query", null, "http://jabber.org/protocol/muc#admin");
 			Element item = new DefaultElement("item", null, null);
@@ -188,7 +186,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 			item.setAttribute("role", Role.visitor.name());
 			query.addChild(item);
 			iq.addChild(query);
-			send(iq);
+			richmjSend(iq);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -216,7 +214,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 			iq.addChild(query);
 			log.info("membersOnly:" + iq.getAsString());
 			System.err.println("membersOnly:" + iq.getAsString());
-			send(iq);
+			richmjSend(iq);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -243,7 +241,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 				query.addChild(item);
 			}
 			log.info("addMembers:" + iq.getAsString());
-			send(iq);
+			richmjSend(iq);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -303,15 +301,14 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 	public void richMJMemberOnlyRoon(String roomName, String username, List<String> members){
 		try {
 			//首先代表用户去创建房间
-			send(XMPPUtil.joinRoomStanza(roomName, username));
-			//等待一会，确保该房间已经创建成功
-			Thread.sleep(300);
+			richmjCreateRoom(roomName, username);
 			//设置房间为member-only
-			send(memberOnlyStanza(roomName, username));
+			richmjMembersOnly(roomName, username);
 			//给创建房间的人发送邀请
 			richmjDirectInviteUser(roomName, Arrays.asList(username));
 			//添加member
 			addMembers(roomName, members);
+			Thread.sleep(50);
 		} catch (Exception e) {
 			log.error("richMJMemberOnlyRoon异常：", e);
 			e.printStackTrace();
@@ -319,17 +316,38 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 	}
 	
 	/**
+	 * 代表用户创建房间
+	 * @param roomName
+	 * @param username
+	 * @throws XMLException
+	 * @throws JaxmppException
+	 * @throws InterruptedException 
+	 */
+	private void richmjCreateRoom(String roomName, String username) throws XMLException, JaxmppException, InterruptedException{
+		//1.代表用户进入房间
+		richmjSend(XMPPUtil.joinRoomStanza(roomName, username));
+		//等待一会，确保该房间已经创建成功
+		Thread.sleep(50);
+		/*
+		 * 2.代表用户离开房间，清理痕迹，如果不这样的话，会出现下面的问题：
+		 * 因为上面代表用户进入房间的时候，这个房间会将该用户添加到在线成员列表，
+		 * 所以，当该用户通过客户端app登陆进入房间的时候，这个room里面拥有两个该用户JID列表（resource不同）
+		 * 从而导致该用户客户端会受到两条任意的消息（无论是该用户发的群聊消息还是其他用户发的群聊消息），
+		 * 因此，要解决这个问题，就需要通过离开房间，达到清理痕迹的目的
+		 */
+		richmjLeaveRoom(roomName, username);
+	}
+	
+	/**
 	 * 配置member-only room的stanza
 	 * @param roomName
 	 * @param username
 	 * @return
-	 * @throws XMLException
+	 * @throws JaxmppException 
 	 */
-	private IQ memberOnlyStanza(String roomName, String username) throws XMLException{
+	private void richmjMembersOnly(String roomName, String username) throws JaxmppException{
 		IQ iq = iq(XMPPUtil.getRoomJID(roomName), StanzaType.set);
-		iq.setAttribute("to", Constant.RICHMJ_COMPONNET_JID);
-		iq.setAttribute(Constant.RICHMJ_STANZA_FROM, XMPPUtil.getBareJID(username));
-		iq.setAttribute(Constant.RICHMJ_STANZA_TO, XMPPUtil.getRoomJID(roomName));
+		XMPPUtil.richmjComponentAgent(iq, XMPPUtil.getBareJID(username), XMPPUtil.getRoomJID(roomName));
 		Element query = new DefaultElement("query", null, "http://jabber.org/protocol/muc#owner");
 		Element x = new DefaultElement("x", null, "jabber:x:data");
 		x.setAttribute("type", "submit");
@@ -338,7 +356,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 		query.addChild(x);
 		iq.addChild(query);
 		log.info("membersOnly:" + iq.getAsString());
-		return iq;
+		richmjSend(iq);
 	}
 	
 	@Override
@@ -354,7 +372,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
     			Element x = new DefaultElement("x", null, "jabber:x:conference");
     			x.setAttribute("jid", XMPPUtil.getRoomJID(roomName));
     			message.addChild(x);
-    			send(message);
+    			richmjSend(message);
     		}
 		} catch (Exception e) {
 			log.error("richmjDirectInviteUser异常：", e);
@@ -368,7 +386,7 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 	 * @throws XMLException
 	 * @throws JaxmppException
 	 */
-	private void send(Stanza stanza) throws XMLException, JaxmppException{
+	private void richmjSend(Stanza stanza) throws XMLException, JaxmppException{
 		log.info("开始发送stanza:" + stanza.getAsString());
 		//如果是iq类型的stanza，则等待响应
 		if("iq".equalsIgnoreCase(stanza.getName())){
@@ -389,6 +407,28 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 			return;
 		}
 		xmppClient.getJaxmpp().send(stanza);
+	}
+	
+	/**
+	 * 离开房间(用于清除enterRoom的时候留下的痕迹)
+	 * @param roomName
+	 * @param username
+	 * @throws JaxmppException
+	 */
+	public void richmjLeaveRoom(String roomName, String username) throws JaxmppException{
+		Presence presence = Presence.create();
+		presence.setType(StanzaType.unavailable);
+		XMPPUtil.richmjComponentAgent(presence, XMPPUtil.getBareJID(username), XMPPUtil.getRoomJID(roomName) + "/" + XMPPUtil.getBareName(username));
+		log.info("richmjLeaveRoom: " + presence.getAsString());
+		richmjSend(presence);
+	}
+	
+	public void richmjLogout(String username) throws JaxmppException{
+		Presence presence = Presence.create();
+		presence.setType(StanzaType.unavailable);
+		XMPPUtil.richmjComponentAgent(presence, XMPPUtil.getBareJID(username), XMPPUtil.SERVER);
+		log.info("richmjLogout: " + presence.getAsString());
+		richmjSend(presence);
 	}
 
 }

@@ -43,7 +43,7 @@ public class OpenChatClient {
 //        }
 
         RoomService roomService = context.getBean(RoomService.class);
-        roomService.richMJMemberOnlyRoon("richMJMemberOnlyRoon-2", "chaohui", Arrays.asList("richmj"));
+        roomService.richMJMemberOnlyRoon("2016-06-29-7", "chaohui", Arrays.asList("richmj"));
         //roomService.change2Visitor("richMJMemberOnlyRoon-1", "chaohui", "richmj");
         //roomService.invite(roomService.getRoom("richMJMemberOnlyRoon-1"), "chaohui", "reason...");
         //roomService.richmjDirectInviteUser("richMJMemberOnlyRoon-1", Arrays.asList("chaohui", "admin", "richmj"));
@@ -89,6 +89,7 @@ public class OpenChatClient {
         //roomService.change2Visitor(room, "chaohui");
 //        roomService.destroy(room);
 //        System.out.println("destroy room...");
+        xmppClient.getJaxmpp().disconnect();
         context.close();
     }
     

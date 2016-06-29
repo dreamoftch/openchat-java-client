@@ -91,3 +91,9 @@
     </invite>
   </x>
 </message>
+
+离开房间：
+<presence
+    from='hag66@shakespeare.lit/pda'
+    to='coven@chat.shakespeare.lit/thirdwitch'
+    type='unavailable'/>
