@@ -298,14 +298,14 @@ public class RoomServiceImpl extends BaseServiceImpl implements RoomService, Lis
 	}
 	
 	@Override
-	public void richMJMemberOnlyRoon(String roomName, String username, List<String> members){
+	public void richMJMemberOnlyRoon(String roomName, String creator, List<String> members){
 		try {
 			//首先代表用户去创建房间
-			richmjCreateRoom(roomName, username);
+			richmjCreateRoom(roomName, creator);
 			//设置房间为member-only
-			richmjMembersOnly(roomName, username);
+			richmjMembersOnly(roomName, creator);
 			//给创建房间的人发送邀请
-			richmjDirectInviteUser(roomName, Arrays.asList(username));
+			richmjDirectInviteUser(roomName, Arrays.asList(creator));
 			//添加member
 			addMembers(roomName, members);
 			Thread.sleep(50);

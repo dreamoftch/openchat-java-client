@@ -1,5 +1,10 @@
 package com.openchat.utils;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.openchat.constants.Constant;
@@ -134,6 +139,38 @@ public final class XMPPUtil {
 		//2.配置期望的的from和to属性
 		element.setAttribute(Constant.RICHMJ_STANZA_FROM, from);
 		element.setAttribute(Constant.RICHMJ_STANZA_TO, to);
+	}
+	
+	/**
+	 * create presence util method
+	 * @return
+	 * @throws XMLException
+	 */
+	public static Presence createPresence(String from, String to) throws XMLException{
+		Presence presence = Presence.create();
+		presence.setAttribute("from", from);
+		presence.setAttribute("to", to);
+		return presence;
+	}
+	
+	public static Element createElement(String name, String[][] attributeArray) throws XMLException{
+		Element element = new DefaultElement(name);
+		if(ArrayUtils.isNotEmpty(attributeArray)){
+			for(String[] attr : attributeArray){
+				element.setAttribute(attr[0], attr[1]);
+			}
+		}
+		return element;
+	}
+	
+	public static Element createElement(String name, Map<String, String> attributes) throws XMLException{
+		Element element = new DefaultElement(name);
+		if(MapUtils.isNotEmpty(attributes)){
+			for(Entry<String, String> entry : attributes.entrySet()){
+				element.setAttribute(entry.getKey(), entry.getValue());
+			}
+		}
+		return element;
 	}
 	
 	public static void main(String[] args) {
