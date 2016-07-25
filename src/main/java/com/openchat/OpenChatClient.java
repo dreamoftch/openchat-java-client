@@ -35,15 +35,16 @@ public class OpenChatClient {
         XMPPClient xmppClient = context.getBean(XMPPClient.class);
         xmppClient.login();
 
-        Thread.sleep(1000);  // give XMPP enough time to initialize
-//        xmppClient.getJaxmpp().sendMessage(JID.jidInstance("admin@192.168.43.146"), "Test", "This is a test");
+        Thread.sleep(5000);  // give XMPP enough time to initialize
+//        xmppClient.getJaxmpp().sendMessage(JID.jidInstance("chaohui1@192.168.1.120"), "Test", "This is a test");
         // get all my buddies
 //        for (RosterItem item : xmppClient.getJaxmpp().getRoster().getAll()) {
 //            log.info(item.getName() + " subscription " + item.getSubscription().name());
 //        }
 
+        //以指定的用户作为创建人创建团队，并且配置member only，然后邀请指定的成员加入
         RoomService roomService = context.getBean(RoomService.class);
-        roomService.richMJMemberOnlyRoon("2016-06-29-7", "chaohui", Arrays.asList("richmj"));
+        roomService.richMJMemberOnlyRoon("2016-07-25-4", "136", Arrays.asList("77"));
         //roomService.change2Visitor("richMJMemberOnlyRoon-1", "chaohui", "richmj");
         //roomService.invite(roomService.getRoom("richMJMemberOnlyRoon-1"), "chaohui", "reason...");
         //roomService.richmjDirectInviteUser("richMJMemberOnlyRoon-1", Arrays.asList("chaohui", "admin", "richmj"));
@@ -51,9 +52,9 @@ public class OpenChatClient {
 //        membersOnly(context, "members-only-67");
 //        richmjMembersOnly(context, xmppClient, "richmj-chaohui-members-only-11", "chaohui");
         
-        // example for sending a chat message
+        // 发送聊天信息
 //        ChatService chatService = context.getBean(ChatService.class);
-//        chatService.sendMessage("admin@192.168.43.146", "Hello from Java app");
+//        chatService.sendMessage("136@192.168.1.120", "Hello from Java app");
 
         // example of adding a roster to default group
 //        RosterService rosterService = context.getBean(RosterService.class);
@@ -89,6 +90,7 @@ public class OpenChatClient {
         //roomService.change2Visitor(room, "chaohui");
 //        roomService.destroy(room);
 //        System.out.println("destroy room...");
+        Thread.sleep(2000);
         xmppClient.getJaxmpp().disconnect();
         context.close();
     }

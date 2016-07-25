@@ -135,7 +135,7 @@ public final class XMPPUtil {
 	 */
 	public static void richmjComponentAgent(Element element, String from, String to) throws XMLException{
 		//1.将该stanza发到自定义的richmj component，然后该component作为代理，代表from，将该stanza转发到期望的地址to
-		element.setAttribute("to", Constant.RICHMJ_COMPONNET_JID);
+		element.setAttribute("to", Constant.RICHMJ_COMPONNET_NAME + "@" + SERVER);
 		//2.配置期望的的from和to属性
 		element.setAttribute(Constant.RICHMJ_STANZA_FROM, from);
 		element.setAttribute(Constant.RICHMJ_STANZA_TO, to);

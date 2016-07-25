@@ -5,9 +5,9 @@ public final class Constant {
 	private Constant(){}
 	
 	/**
-	 * 自定义component的JID
+	 * 自定义component的name
 	 */
-	public static final String RICHMJ_COMPONNET_JID = "richmj-component@192.168.43.146";
+	public static final String RICHMJ_COMPONNET_NAME = "richmj-component";
 	
 	/**
 	 * 自定义stanze的from
